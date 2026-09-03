@@ -65,7 +65,7 @@ CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS   
 Выполнена команда terraform destroy -auto-approve.
 
 Фрагмент terraform.tfstate после удаления (подтверждение отсутствия ресурсов):
-
+```bash
 {
   "version": 4,
   "terraform_version": "1.14.8",
@@ -75,6 +75,7 @@ CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS   
   "resources": [],
   "check_results": null
 }
+```
 
 Массив "resources": [] подтверждает, что все ресурсы удалены.
 
@@ -83,10 +84,12 @@ CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS   
 
 Причина: в ресурсе docker_image указан параметр keep_locally = true:
 
+```bash
 resource "docker_image" "nginx" {
   name         = "nginx:latest"
   keep_locally = true
 }
+```
 
 Цитата из документации провайдера kreuzwerker/docker:
 
