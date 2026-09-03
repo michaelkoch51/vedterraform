@@ -1,36 +1,108 @@
-## Задание 1
+# Задание 1: Terraform + Docker (DevOps, Netology)
 
-### 1. Инициализация проекта
-Выполнена команда `terraform init`. Провайдеры `kreuzwerker/docker` v4.6.0 и `hashicorp/random` v3.9.0 успешно загружены.
+**Статус:** ✅ Выполнено полностью  
+**Репозиторий:** https://github.com/michaelkoch51/vedterraform  
+**Автор:** michaelkoch51  
 
-### 2. Файл для секретных данных
-Согласно `.gitignore`, секретную информацию (логины, пароли, ключи, токены) допустимо хранить в файле `personal.auto.tfvars`. Этот файл:
-- добавлен в `.gitignore` и не попадает в репозиторий;
-- автоматически подхватывается Terraform при запуске (суффикс `*.auto.tfvars`).
+## Цель работы
+Освоить базовые операции с Terraform: инициализацию, валидацию, применение и удаление инфраструктуры, а также научиться работать с провайдером `kreuzwerker/docker` для управления контейнерами и образами.
 
-### 3. Секретное содержимое random_password
-После выполнения `terraform apply` в файле `terraform.tfstate` найден ресурс `random_password`:
+---
+
+## Ход выполнения и результаты
+
+### 1. Инициализация проекта и загрузка провайдеров
+Выполнена команда `terraform init`. Провайдеры успешно загружены:
+- `kreuzwerker/docker` v4.6.0
+- `hashicorp/random` v3.9.0
+
+### 2. Работа с секретными данными
+Для хранения чувствительных данных (паролей, токенов) использован файл `personal.auto.tfvars`.
+- Файл добавлен в `.gitignore`, чтобы исключить попадание секретов в публичный репозиторий.
+- Terraform автоматически подхватывает файлы с суффиксом `*.auto.tfvars` при запуске команд.
+
+> ⚠️ **Важно:** Файл `terraform.tfstate` также не загружается в репозиторий, так как содержит текущее состояние инфраструктуры и может включать чувствительные данные.
+
+### 3. Генерация случайного пароля и его значение
+С помощью ресурса `random_password` сгенерирован секретный ключ:
 - **Ключ:** `result`
 - **Значение:** `JaeUL9jO5ri9wYlc`
 
-### 4. Ошибки в раскомментированном блоке и их исправление
-После раскомментирования блока (строки 29–42) и выполнения `terraform validate` были выявлены следующие ошибки:
+Это значение использовалось для формирования уникального имени контейнера, исключая конфликты имён.
 
-1. **У `docker_image` отсутствовало имя ресурса.** Строка `resource "docker_image" {` не содержала второго аргумента. Исправлено: `resource "docker_image" "nginx" {`.
-2. **Неверная ссылка на образ.** `docker_image.nginx.image_id` — такого атрибута не существует. Исправлено на `docker_image.nginx.name`.
-3. **Имя ресурса контейнера начиналось с цифры.** `resource "docker_container" "1nginx"` — недопустимо. Исправлено на `nginx_example`.
-4. **Опечатка в ссылке на пароль.** `random_password.random_string_FAKE.resulT` — несуществующее имя ресурса и опечатка в атрибуте. Исправлено на `random_password.random_string.result`.
+### 4. Исправление ошибок в конфигурации
+После раскомментирования блока кода и запуска `terraform validate` были выявлены и исправлены следующие ошибки:
 
-После исправлений `terraform validate` прошёл успешно: `Success! The configuration is valid.`
+| Ошибка | Исправление |
+| --- | --- |
+| У ресурса `docker_image` отсутствовало имя | Добавлено имя ресурса: `resource "docker_image" "nginx" { ... }` |
+| Неверная ссылка на ID образа (`docker_image.nginx.image_id`) | Заменено на корректный атрибут: `docker_image.nginx.name` |
+| Недопустимое имя контейнера (начиналось с цифры: `"1nginx"`) | Переименовано в `nginx_example` |
+| Опечатка в ссылке на пароль (`random_password.random_string_FAKE.resulT`) | Исправлена на `random_password.random_string.result` |
 
-Исправленный фрагмент кода:
+После исправлений команда `terraform validate` вернула: `Success! The configuration is valid.`
 
-```hcl
+### 5. Применение конфигурации и проверка работы
+Выполнена команда `terraform apply`. Созданы:
+- Образ `nginx:latest` (локально)
+- Контейнер с уникальным именем (на основе сгенерированного пароля)
+
+Проверка работы через `curl`:
+```bash
+curl http://localhost:9090
+```
+Результат: статус 200 OK, получена стандартная HTML-страница Nginx.
+
+Вывод docker ps (фрагмент):
+
+CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS                  NAMES
+3af5c39fde25   nginx:latest   "/docker-entrypoint.…"   4 seconds ago   Up 4 seconds   0.0.0.0:9090->80/tcp   hello_world
+
+
+6. Переименование контейнера и подтверждение
+Контейнер был переименован в hello_world путём изменения параметра name в файле main.tf. После повторного terraform apply подтверждено создание контейнера с новым именем (см. вывод docker ps выше).
+
+7. Удаление ресурсов (terraform destroy)
+Выполнена команда terraform destroy -auto-approve.
+
+Фрагмент terraform.tfstate после удаления (подтверждение отсутствия ресурсов):
+
+{
+  "version": 4,
+  "terraform_version": "1.14.8",
+  "serial": 11,
+  "lineage": "fff50a51-48dd-b48c-30aa-e090986f9cb1",
+  "outputs": {},
+  "resources": [],
+  "check_results": null
+}
+
+Массив "resources": [] подтверждает, что все ресурсы удалены.
+
+8. Почему Docker-образ nginx:latest остался на машине
+Несмотря на выполнение terraform destroy, образ nginx:latest сохранился в локальном хранилище Docker.
+
+Причина: в ресурсе docker_image указан параметр keep_locally = true:
+
 resource "docker_image" "nginx" {
   name         = "nginx:latest"
   keep_locally = true
 }
 
-resource "docker_container" "nginx_example" {
-  image = docker_image.nginx.name
-  name  = "example_
+Цитата из документации провайдера kreuzwerker/docker:
+
+keep_locally (Boolean) — If true, then the Docker image won't be deleted on destroy operation.
+Таким образом, Terraform корректно удалил только ресурс-ссылку, но не сам образ, что соответствует настройкам конфигурации.
+
+9. Риски использования флага -auto-approve
+Флаг -auto-approve отключает интерактивное подтверждение плана перед применением или удалением ресурсов.
+
+Риск: возможность непреднамеренного изменения или удаления инфраструктуры без возможности проверки плана.
+Рекомендация: использовать только в автоматизированных пайплайнах (CI/CD) или когда план уже проверен вручную.
+
+Вывод
+
+Все этапы задания выполнены: проведена инициализация, исправлены ошибки конфигурации, применена и проверена инфраструктура, выполнено удаление ресурсов с анализом поведения Terraform и Docker. Конфигурация готова к повторному использованию.
+
+![](https://github.com/user-attachments/assets/5d0f993a-ce81-4222-a1df-10c73069d2f9)
+![](https://github.com/user-attachments/assets/121eb1cb-d0c5-4cda-8497-d082225c8d8e)
