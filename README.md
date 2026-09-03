@@ -1,30 +1,36 @@
-## Выполнение Задания 1
+## Задание 1
 
-### Создание random_password
-Ресурс `random_password.random_string` успешно создан.  
-Ключ: `result`  
-Значение: `JaeUL9jO5ri9wYlc`
+### 1. Инициализация проекта
+Выполнена команда `terraform init`. Провайдеры `kreuzwerker/docker` v4.6.0 и `hashicorp/random` v3.9.0 успешно загружены.
 
-### Развёртывание Docker-ресурсов через Terraform
-Terraform создал:
-- образ `nginx:latest` через ресурс `docker_image`,
-- контейнер `example_JaeUL9jO5ri9wYlc` с пробросом порта `9090 → 80`.
+### 2. Файл для секретных данных
+Согласно `.gitignore`, секретную информацию (логины, пароли, ключи, токены) допустимо хранить в файле `personal.auto.tfvars`. Этот файл:
+- добавлен в `.gitignore` и не попадает в репозиторий;
+- автоматически подхватывается Terraform при запуске (суффикс `*.auto.tfvars`).
 
-Проверка через `curl http://localhost:9090` подтвердила, что Nginx отвечает HTTP/1.1 200 OK и отдаёт стандартную страницу.
+### 3. Секретное содержимое random_password
+После выполнения `terraform apply` в файле `terraform.tfstate` найден ресурс `random_password`:
+- **Ключ:** `result`
+- **Значение:** `JaeUL9jO5ri9wYlc`
 
-### Переименование контейнера в hello_world
-Имя контейнера изменено в `main.tf` на `hello_world`. Terraform удалил старый контейнер и создал новый.  
-Вывод `docker ps` подтверждает: контейнер называется `hello_world`, порт `9090` проброшен, сервис доступен.
+### 4. Ошибки в раскомментированном блоке и их исправление
+После раскомментирования блока (строки 29–42) и выполнения `terraform validate` были выявлены следующие ошибки:
 
-### Удаление ресурсов и поведение образа
-Выполнена команда `terraform destroy`.  
-- Контейнер удалён (подтверждено `docker ps`).  
-- Образ `nginx:latest` остался в локальном кэше (подтверждено `docker images`).
+1. **У `docker_image` отсутствовало имя ресурса.** Строка `resource "docker_image" {` не содержала второго аргумента. Исправлено: `resource "docker_image" "nginx" {`.
+2. **Неверная ссылка на образ.** `docker_image.nginx.image_id` — такого атрибута не существует. Исправлено на `docker_image.nginx.name`.
+3. **Имя ресурса контейнера начиналось с цифры.** `resource "docker_container" "1nginx"` — недопустимо. Исправлено на `nginx_example`.
+4. **Опечатка в ссылке на пароль.** `random_password.random_string_FAKE.resulT` — несуществующее имя ресурса и опечатка в атрибуте. Исправлено на `random_password.random_string.result`.
 
-**Причина:** в ресурсе `docker_image` установлен параметр `keep_locally = true`:
+После исправлений `terraform validate` прошёл успешно: `Success! The configuration is valid.`
+
+Исправленный фрагмент кода:
 
 ```hcl
 resource "docker_image" "nginx" {
   name         = "nginx:latest"
   keep_locally = true
 }
+
+resource "docker_container" "nginx_example" {
+  image = docker_image.nginx.name
+  name  = "example_
