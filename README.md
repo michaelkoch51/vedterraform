@@ -53,10 +53,12 @@ curl http://localhost:9090
 ```
 Результат: статус 200 OK, получена стандартная HTML-страница Nginx.
 
-Вывод docker ps (фрагмент):
+Вывод `docker ps` (фрагмент):
 
+```text
 CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS                  NAMES
 3af5c39fde25   nginx:latest   "/docker-entrypoint.…"   4 seconds ago   Up 4 seconds   0.0.0.0:9090->80/tcp   hello_world
+
 
 
 6. Переименование контейнера и подтверждение
