@@ -1,8 +1,5 @@
-# Задание 1: Terraform + Docker (DevOps, Netology)
+# Задание 1: Terraform + Docker
 
-**Статус:** ✅ Выполнено полностью  
-**Репозиторий:** https://github.com/michaelkoch51/vedterraform  
-**Автор:** michaelkoch51  
 
 ## Цель работы
 Освоить базовые операции с Terraform: инициализацию, валидацию, применение и удаление инфраструктуры, а также научиться работать с провайдером `kreuzwerker/docker` для управления контейнерами и образами.
@@ -58,7 +55,7 @@ curl http://localhost:9090
 ```text
 CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS                  NAMES
 3af5c39fde25   nginx:latest   "/docker-entrypoint.…"   4 seconds ago   Up 4 seconds   0.0.0.0:9090->80/tcp   hello_world
-
+```
 
 
 6. Переименование контейнера и подтверждение
